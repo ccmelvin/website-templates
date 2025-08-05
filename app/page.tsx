@@ -1,916 +1,557 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo, useEffect } from "react"
+import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { showitTemplates, categories, styles, type ShowitTemplate } from "@/lib/showit-templates"
+import { 
+  Search, 
+  Eye, 
+  Download, 
+  Star, 
+  Users, 
+  Smartphone,
+  Monitor,
+  ExternalLink,
+  Heart,
+  Share2,
+  Grid3X3,
+  List,
+  Moon,
+  Sun,
+  Menu,
+  Palette,
+  Zap,
+  Crown,
+  Sparkles,
+  ShoppingCart
+} from "lucide-react"
 
-const templates = [
-  { id: "life-coach", name: "Life Coach", description: "Empowering transformation and personal growth" },
-  { id: "personal-trainer", name: "Personal Trainer", description: "Fitness coaching and wellness programs" },
-  { id: "author", name: "Author", description: "Bestselling books and literary works" },
-  { id: "photographer", name: "Photographer", description: "Capturing moments and visual storytelling" },
-  { id: "architect", name: "Architect", description: "Innovative design and sustainable architecture" },
-  { id: "chef", name: "Chef", description: "Culinary excellence and gastronomic experiences" },
-  { id: "therapist", name: "Therapist", description: "Mental health and wellness support" },
-  { id: "consultant", name: "Business Consultant", description: "Strategic guidance and business growth" },
-  { id: "designer", name: "Interior Designer", description: "Beautiful spaces and home transformation" },
-  { id: "musician", name: "Musician", description: "Original compositions and live performances" },
-]
+const difficulties = ["All", "Beginner", "Intermediate", "Advanced"]
+const priceRanges = ["All", "Free", "$1-99", "$100-149", "$150+"]
 
-export default function TemplateSelector() {
-  const [selectedTemplate, setSelectedTemplate] = useState("life-coach")
+export default function ShowitTemplateDashboard() {
+  const { theme, setTheme } = useTheme()
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("All")
+  const [selectedStyle, setSelectedStyle] = useState("All")
+  const [selectedDifficulty, setSelectedDifficulty] = useState("All")
+  const [selectedPriceRange, setSelectedPriceRange] = useState("All")
+  const [sortBy, setSortBy] = useState("popularity")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
+  const [favorites, setFavorites] = useState<string[]>([])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const filteredTemplates = useMemo(() => {
+    let filtered = showitTemplates.filter(template => {
+      const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          template.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          template.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          template.designer.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesCategory = selectedCategory === "All" || template.category === selectedCategory
+      const matchesStyle = selectedStyle === "All" || template.style === selectedStyle
+      const matchesDifficulty = selectedDifficulty === "All" || template.difficulty === selectedDifficulty
+      
+      const matchesPriceRange = selectedPriceRange === "All" || 
+        (selectedPriceRange === "Free" && template.price === 0) ||
+        (selectedPriceRange === "$1-99" && template.price > 0 && template.price < 100) ||
+        (selectedPriceRange === "$100-149" && template.price >= 100 && template.price < 150) ||
+        (selectedPriceRange === "$150+" && template.price >= 150)
+      
+      return matchesSearch && matchesCategory && matchesStyle && matchesDifficulty && matchesPriceRange
+    })
+
+    switch (sortBy) {
+      case "popularity":
+        return filtered.sort((a, b) => b.downloads - a.downloads)
+      case "rating":
+        return filtered.sort((a, b) => b.rating - a.rating)
+      case "price-low":
+        return filtered.sort((a, b) => a.price - b.price)
+      case "price-high":
+        return filtered.sort((a, b) => b.price - a.price)
+      case "name":
+        return filtered.sort((a, b) => a.name.localeCompare(b.name))
+      case "newest":
+        return filtered.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0))
+      default:
+        return filtered
+    }
+  }, [searchTerm, selectedCategory, selectedStyle, selectedDifficulty, selectedPriceRange, sortBy])
+
+  const toggleFavorite = (templateId: string) => {
+    setFavorites(prev => 
+      prev.includes(templateId) 
+        ? prev.filter(id => id !== templateId)
+        : [...prev, templateId]
+    )
+  }
+
+  const getColorClasses = (color: string) => {
+    const colorMap: Record<string, string> = {
+      purple: "from-purple-500 to-pink-500",
+      orange: "from-orange-500 to-red-500",
+      amber: "from-amber-500 to-yellow-500",
+      slate: "from-slate-500 to-gray-500",
+      blue: "from-blue-500 to-cyan-500",
+      green: "from-green-500 to-emerald-500",
+      teal: "from-teal-500 to-cyan-500",
+      indigo: "from-indigo-500 to-purple-500",
+      rose: "from-rose-500 to-pink-500",
+      pink: "from-pink-500 to-rose-500",
+      violet: "from-violet-500 to-purple-500",
+    }
+    return colorMap[color] || "from-gray-500 to-slate-500"
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">Professional Website Templates</h1>
-          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
-            Choose from 10 beautifully designed templates for different professions. Each template features modern UI/UX
-            with responsive design.
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
+      <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
+      
+      <div className="container mx-auto px-4 py-8 relative">
+        <nav className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-pink-500 via-purple-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+              <Palette className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                ShowCraft
+              </span>
+              <p className="text-xs text-slate-500 dark:text-slate-400 -mt-1">Design Templates</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
+              Browse All
+            </Button>
+            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
+              Designers
+            </Button>
+            <Button variant="ghost" size="sm" className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
+              Support
+            </Button>
+            {mounted && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="w-9 h-9 p-0"
+              >
+                {theme === "dark" ? (
+                  <Sun className="h-4 w-4" />
+                ) : (
+                  <Moon className="h-4 w-4" />
+                )}
+              </Button>
+            )}
+            <Button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-medium">
+              <ShoppingCart className="w-4 h-4 mr-2" />
+              Cart (0)
+            </Button>
+          </div>
+        </nav>
+
+        <div className="relative overflow-hidden bg-gradient-to-r from-pink-900 via-purple-900 to-indigo-900 rounded-3xl mb-12">
+          <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
+          <div className="relative px-8 py-16 text-center">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-sm font-medium mb-6">
+              <Sparkles className="w-4 h-4 mr-2 text-pink-300" />
+              {showitTemplates.length}+ Premium Design Templates
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
+              Beautiful Website
+              <span className="block bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                Templates
+              </span>
+            </h1>
+            <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8 leading-relaxed">
+              Discover stunning, professionally designed templates for creatives, photographers, 
+              and businesses. Each template is crafted with attention to detail and modern design principles.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button size="lg" className="bg-white text-slate-900 hover:bg-slate-100 font-semibold px-8">
+                <Eye className="w-5 h-5 mr-2" />
+                Browse Templates
+              </Button>
+              <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 font-semibold px-8">
+                <Palette className="w-5 h-5 mr-2" />
+                View Styles
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-          {templates.map((template) => (
-            <Card
-              key={template.id}
-              className={`cursor-pointer transition-all duration-200 hover:shadow-lg ${
-                selectedTemplate === template.id ? "ring-2 ring-blue-500 shadow-lg" : "hover:shadow-md"
+        <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+          <CardContent className="p-6">
+            <div className="flex flex-col space-y-4">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 h-5 w-5" />
+                <Input
+                  placeholder="Search templates, designers, or styles..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-12 h-12 text-base border-slate-200 focus:border-pink-500 focus:ring-pink-500/20"
+                />
+              </div>
+              
+              <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+                <div className="flex gap-3 flex-wrap">
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-[180px] h-10 border-slate-200">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Categories</SelectItem>
+                      {categories.map(category => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedStyle} onValueChange={setSelectedStyle}>
+                    <SelectTrigger className="w-[160px] h-10 border-slate-200">
+                      <SelectValue placeholder="All Styles" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="All">All Styles</SelectItem>
+                      {styles.map(style => (
+                        <SelectItem key={style} value={style}>
+                          {style}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedPriceRange} onValueChange={setSelectedPriceRange}>
+                    <SelectTrigger className="w-[140px] h-10 border-slate-200">
+                      <SelectValue placeholder="All Prices" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priceRanges.map(range => (
+                        <SelectItem key={range} value={range}>
+                          {range}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+                    <SelectTrigger className="w-[130px] h-10 border-slate-200">
+                      <SelectValue placeholder="All Levels" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {difficulties.map(difficulty => (
+                        <SelectItem key={difficulty} value={difficulty}>
+                          {difficulty}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-[140px] h-10 border-slate-200">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="popularity">Most Popular</SelectItem>
+                      <SelectItem value="rating">Highest Rated</SelectItem>
+                      <SelectItem value="price-low">Price: Low to High</SelectItem>
+                      <SelectItem value="price-high">Price: High to Low</SelectItem>
+                      <SelectItem value="name">Alphabetical</SelectItem>
+                      <SelectItem value="newest">Recently Added</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-slate-600">View:</span>
+                  <div className="flex border border-slate-200 rounded-lg p-1 bg-slate-50">
+                    <Button
+                      variant={viewMode === "grid" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setViewMode("grid")}
+                      className="h-8 px-3"
+                    >
+                      <Grid3X3 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant={viewMode === "list" ? "default" : "ghost"}
+                      size="sm"
+                      onClick={() => setViewMode("list")}
+                      className="h-8 px-3"
+                    >
+                      <List className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <p className="text-slate-600 font-medium">
+              Showing <span className="font-bold text-slate-900">{filteredTemplates.length}</span> of{' '}
+              <span className="font-bold text-slate-900">{showitTemplates.length}</span> templates
+            </p>
+            {(searchTerm || selectedCategory !== "All" || selectedStyle !== "All" || selectedDifficulty !== "All" || selectedPriceRange !== "All") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchTerm("")
+                  setSelectedCategory("All")
+                  setSelectedStyle("All")
+                  setSelectedDifficulty("All")
+                  setSelectedPriceRange("All")
+                }}
+                className="text-slate-500 hover:text-slate-700"
+              >
+                Clear filters
+              </Button>
+            )}
+          </div>
+          
+          {favorites.length > 0 && (
+            <Badge variant="secondary" className="flex items-center gap-2 px-3 py-1.5 bg-pink-50 text-pink-700 border-pink-200">
+              <Heart className="h-4 w-4 fill-current" />
+              {favorites.length} favorite{favorites.length !== 1 ? 's' : ''}
+            </Badge>
+          )}
+        </div>
+
+        <div className={viewMode === "grid" 
+          ? "grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" 
+          : "space-y-6"
+        }>
+          {filteredTemplates.map((template) => (
+            <Card 
+              key={template.id} 
+              className={`group hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 cursor-pointer border-0 bg-white/80 backdrop-blur-sm hover:-translate-y-1 ${
+                viewMode === "list" ? "flex overflow-hidden" : "overflow-hidden"
               }`}
-              onClick={() => setSelectedTemplate(template.id)}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg">{template.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-sm">{template.description}</CardDescription>
-              </CardContent>
+              <div className={`relative overflow-hidden ${
+                viewMode === "list" ? "w-64 flex-shrink-0" : "aspect-[4/3]"
+              }`}>
+                <div className={`absolute inset-0 bg-gradient-to-br ${getColorClasses(template.color)} opacity-10`} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-center text-slate-700">
+                    <div className="w-16 h-16 mx-auto mb-3 bg-white/90 rounded-2xl flex items-center justify-center shadow-lg">
+                      <Monitor className="h-8 w-8 text-slate-600" />
+                    </div>
+                    <p className="text-sm font-semibold text-slate-800">{template.name}</p>
+                    <p className="text-xs text-slate-600 mt-1">{template.category}</p>
+                  </div>
+                </div>
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button size="sm" className="bg-white/90 text-slate-900 hover:bg-white shadow-lg backdrop-blur-sm">
+                        <Eye className="h-4 w-4 mr-2" />
+                        Preview
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-6xl h-[80vh]">
+                      <DialogHeader>
+                        <DialogTitle className="text-xl font-semibold">{template.name} - Live Preview</DialogTitle>
+                        <DialogDescription className="text-slate-600">
+                          {template.description}
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex-1 bg-white rounded-lg overflow-hidden border">
+                        <iframe 
+                          src={template.demoUrl}
+                          className="w-full h-full border-0"
+                          title={`${template.name} Preview`}
+                        />
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <Button size="sm" className="bg-white/90 text-slate-900 hover:bg-white shadow-lg backdrop-blur-sm" asChild>
+                    <a href={template.demoUrl} target="_blank">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open
+                    </a>
+                  </Button>
+                </div>
+
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm w-10 h-10 p-0"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleFavorite(template.id)
+                  }}
+                >
+                  <Heart 
+                    className={`h-4 w-4 transition-colors ${
+                      favorites.includes(template.id) 
+                        ? "fill-red-500 text-red-500" 
+                        : "text-slate-600 hover:text-red-500"
+                    }`} 
+                  />
+                </Button>
+
+                <div className="absolute top-3 left-3 flex flex-col gap-2">
+                  <Badge className="bg-white/90 text-slate-700 border-0 shadow-sm backdrop-blur-sm font-medium">
+                    {template.category}
+                  </Badge>
+                  {template.mobileOptimized && (
+                    <Badge variant="outline" className="bg-white/90 border-0 text-slate-600 shadow-sm backdrop-blur-sm">
+                      <Smartphone className="h-3 w-3 mr-1" />
+                      Mobile Ready
+                    </Badge>
+                  )}
+                  {template.isPremium && (
+                    <Badge variant="outline" className="bg-gradient-to-r from-pink-500 to-purple-600 text-white border-0 shadow-sm backdrop-blur-sm">
+                      <Crown className="h-3 w-3 mr-1" />
+                      Premium
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className={`p-6 ${viewMode === "list" ? "flex-1" : ""}`}>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-bold text-lg text-slate-900 group-hover:text-pink-600 transition-colors">
+                        {template.name}
+                      </h3>
+                      {template.isNew && (
+                        <Badge className="bg-green-100 text-green-700 text-xs">
+                          <Sparkles className="w-3 h-3 mr-1" />
+                          New
+                        </Badge>
+                      )}
+                      {template.isBestseller && (
+                        <Badge className="bg-amber-100 text-amber-700 text-xs">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Bestseller
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-slate-600 leading-relaxed mb-2">{template.description}</p>
+                    <p className="text-xs text-slate-500">by {template.designer}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-slate-900">
+                      ${template.price}
+                    </div>
+                    <p className="text-xs text-slate-500">{template.style}</p>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {template.features.slice(0, 3).map((feature, index) => (
+                    <Badge key={index} variant="outline" className="text-xs bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 transition-colors">
+                      {feature}
+                    </Badge>
+                  ))}
+                  {template.features.length > 3 && (
+                    <Badge variant="outline" className="text-xs bg-pink-50 text-pink-700 border-pink-200">
+                      +{template.features.length - 3} more
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between text-sm mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            className={`h-3.5 w-3.5 ${
+                              i < Math.floor(template.rating) 
+                                ? "fill-yellow-400 text-yellow-400" 
+                                : "text-slate-300"
+                            }`} 
+                          />
+                        ))}
+                      </div>
+                      <span className="font-medium text-slate-700">{template.rating}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 text-slate-600">
+                      <Users className="h-3.5 w-3.5" />
+                      <span className="font-medium">{template.downloads.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <Badge 
+                    variant={template.difficulty === "Beginner" ? "default" : 
+                            template.difficulty === "Intermediate" ? "secondary" : "destructive"}
+                    className="text-xs font-medium"
+                  >
+                    {template.difficulty}
+                  </Badge>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-medium shadow-lg">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add to Cart
+                  </Button>
+                  <Button variant="outline" className="border-slate-200 hover:bg-slate-50">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
             </Card>
           ))}
         </div>
 
-        <div className="text-center mb-8">
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            Currently Viewing: {templates.find((t) => t.id === selectedTemplate)?.name}
-          </Badge>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-xl overflow-hidden">
-          <div className="h-[600px] overflow-y-auto">
-            {selectedTemplate === "life-coach" && <LifeCoachTemplate />}
-            {selectedTemplate === "personal-trainer" && <PersonalTrainerTemplate />}
-            {selectedTemplate === "author" && <AuthorTemplate />}
-            {selectedTemplate === "photographer" && <PhotographerTemplate />}
-            {selectedTemplate === "architect" && <ArchitectTemplate />}
-            {selectedTemplate === "chef" && <ChefTemplate />}
-            {selectedTemplate === "therapist" && <TherapistTemplate />}
-            {selectedTemplate === "consultant" && <ConsultantTemplate />}
-            {selectedTemplate === "designer" && <DesignerTemplate />}
-            {selectedTemplate === "musician" && <MusicianTemplate />}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Life Coach Template
-function LifeCoachTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-purple-50 to-pink-50 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-purple-600">Sarah Chen</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-purple-600">
-                About
-              </a>
-              <a href="#" className="text-gray-700 hover:text-purple-600">
-                Services
-              </a>
-              <a href="#" className="text-gray-700 hover:text-purple-600">
-                Testimonials
-              </a>
-              <a href="#" className="text-gray-700 hover:text-purple-600">
-                Contact
-              </a>
+        {filteredTemplates.length === 0 && (
+          <div className="text-center py-16">
+            <div className="w-24 h-24 mx-auto mb-6 bg-slate-100 rounded-full flex items-center justify-center">
+              <Search className="h-10 w-10 text-slate-400" />
             </div>
-            <Button className="bg-purple-600 hover:bg-purple-700">Book Session</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Transform Your Life with Purpose</h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Unlock your potential and create the life you've always dreamed of. Together, we'll build a roadmap to your
-            success and happiness.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-purple-600 hover:bg-purple-700">
-              Start Your Journey
-            </Button>
-            <Button size="lg" variant="outline">
-              Free Consultation
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Services */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Coaching Services</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "1-on-1 Coaching",
-                description: "Personalized sessions tailored to your unique goals and challenges.",
-                price: "$150/session",
-              },
-              {
-                title: "Group Programs",
-                description: "Join like-minded individuals on a transformative journey together.",
-                price: "$75/session",
-              },
-              {
-                title: "Online Courses",
-                description: "Self-paced learning modules for continuous personal development.",
-                price: "$297/course",
-              },
-            ].map((service, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-purple-600">{service.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-4">{service.description}</p>
-                  <p className="text-2xl font-bold text-purple-600">{service.price}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// Personal Trainer Template
-function PersonalTrainerTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-orange-50 to-red-50 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-orange-600">FitMax Training</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-orange-600">
-                Programs
-              </a>
-              <a href="#" className="text-gray-700 hover:text-orange-600">
-                Nutrition
-              </a>
-              <a href="#" className="text-gray-700 hover:text-orange-600">
-                Success Stories
-              </a>
-              <a href="#" className="text-gray-700 hover:text-orange-600">
-                Contact
-              </a>
-            </div>
-            <Button className="bg-orange-600 hover:bg-orange-700">Free Trial</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h1 className="text-5xl font-bold text-gray-900 mb-6">Achieve Your Fitness Goals</h1>
-              <p className="text-xl text-gray-600 mb-8">
-                Transform your body and mind with personalized training programs designed to fit your lifestyle and
-                exceed your expectations.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" className="bg-orange-600 hover:bg-orange-700">
-                  Start Training
-                </Button>
-                <Button size="lg" variant="outline">
-                  View Programs
-                </Button>
-              </div>
-            </div>
-            <div className="bg-orange-200 rounded-lg h-96 flex items-center justify-center">
-              <span className="text-orange-600 text-lg">Fitness Hero Image</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Programs */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Training Programs</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { name: "Strength Training", duration: "12 weeks", sessions: "3x/week" },
-              { name: "Weight Loss", duration: "16 weeks", sessions: "4x/week" },
-              { name: "Athletic Performance", duration: "8 weeks", sessions: "5x/week" },
-              { name: "Functional Fitness", duration: "10 weeks", sessions: "3x/week" },
-            ].map((program, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-orange-600">{program.name}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">Duration: {program.duration}</p>
-                  <p className="text-gray-600">Sessions: {program.sessions}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// Author Template
-function AuthorTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-amber-50 to-yellow-50 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-amber-700">Emma Rodriguez</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-amber-700">
-                Books
-              </a>
-              <a href="#" className="text-gray-700 hover:text-amber-700">
-                About
-              </a>
-              <a href="#" className="text-gray-700 hover:text-amber-700">
-                Blog
-              </a>
-              <a href="#" className="text-gray-700 hover:text-amber-700">
-                Events
-              </a>
-            </div>
-            <Button className="bg-amber-700 hover:bg-amber-800">Newsletter</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Stories That Touch Hearts</h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Bestselling author of contemporary fiction that explores the depths of human emotion and the power of
-            resilience.
-          </p>
-          <Badge className="bg-amber-100 text-amber-800 text-lg px-4 py-2 mb-8">New York Times Bestseller</Badge>
-        </div>
-      </section>
-
-      {/* Latest Books */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Latest Books</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "The Light Between Us",
-                year: "2024",
-                description: "A powerful story of love, loss, and finding hope in unexpected places.",
-              },
-              {
-                title: "Whispers in the Wind",
-                year: "2023",
-                description: "An emotional journey through family secrets and redemption.",
-              },
-              {
-                title: "Dancing with Shadows",
-                year: "2022",
-                description: "A tale of courage and self-discovery in the face of adversity.",
-              },
-            ].map((book, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="bg-amber-200 h-48 rounded-lg mb-4 flex items-center justify-center">
-                    <span className="text-amber-700">Book Cover</span>
-                  </div>
-                  <CardTitle className="text-amber-700">{book.title}</CardTitle>
-                  <CardDescription>{book.year}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">{book.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// Photographer Template
-function PhotographerTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-slate-50 to-gray-100 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-slate-800">Alex Morgan</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-slate-800">
-                Portfolio
-              </a>
-              <a href="#" className="text-gray-700 hover:text-slate-800">
-                Services
-              </a>
-              <a href="#" className="text-gray-700 hover:text-slate-800">
-                About
-              </a>
-              <a href="#" className="text-gray-700 hover:text-slate-800">
-                Contact
-              </a>
-            </div>
-            <Button className="bg-slate-800 hover:bg-slate-900">Book Session</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Capturing Life's Beautiful Moments</h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Professional photographer specializing in weddings, portraits, and lifestyle photography with a focus on
-            authentic storytelling.
-          </p>
-        </div>
-      </section>
-
-      {/* Portfolio Grid */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Recent Work</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {Array.from({ length: 6 }, (_, index) => (
-              <div
-                key={index}
-                className="bg-slate-200 aspect-square rounded-lg hover:shadow-lg transition-shadow flex items-center justify-center"
+            <h3 className="text-2xl font-bold text-slate-900 mb-3">No templates found</h3>
+            <p className="text-slate-600 mb-6 max-w-md mx-auto">
+              We couldn't find any templates matching your search criteria. 
+              Try adjusting your filters or search terms.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setSearchTerm("")
+                  setSelectedCategory("All")
+                  setSelectedStyle("All")
+                  setSelectedDifficulty("All")
+                  setSelectedPriceRange("All")
+                }}
+                className="font-medium"
               >
-                <span className="text-slate-600">Photo {index + 1}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Services */}
-      <section className="py-16 px-6 bg-slate-50">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Photography Services</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                service: "Wedding Photography",
-                price: "Starting at $2,500",
-                description: "Complete wedding day coverage with edited gallery",
-              },
-              {
-                service: "Portrait Sessions",
-                price: "Starting at $350",
-                description: "Individual, couple, and family portrait sessions",
-              },
-              {
-                service: "Event Photography",
-                price: "Starting at $150/hr",
-                description: "Corporate events, parties, and special occasions",
-              },
-            ].map((item, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-slate-800">{item.service}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-2xl font-bold text-slate-800 mb-2">{item.price}</p>
-                  <p className="text-gray-600">{item.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// Architect Template
-function ArchitectTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-blue-700">Studio Arch</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-blue-700">
-                Projects
-              </a>
-              <a href="#" className="text-gray-700 hover:text-blue-700">
-                Services
-              </a>
-              <a href="#" className="text-gray-700 hover:text-blue-700">
-                About
-              </a>
-              <a href="#" className="text-gray-700 hover:text-blue-700">
-                Contact
-              </a>
-            </div>
-            <Button className="bg-blue-700 hover:bg-blue-800">Consultation</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h1 className="text-5xl font-bold text-gray-900 mb-6">Designing Tomorrow's Spaces</h1>
-              <p className="text-xl text-gray-600 mb-8">
-                Award-winning architectural firm creating sustainable, innovative designs that harmonize with their
-                environment and enhance human experience.
-              </p>
-              <Button size="lg" className="bg-blue-700 hover:bg-blue-800">
-                View Projects
+                Clear All Filters
+              </Button>
+              <Button className="font-medium">
+                Browse All Templates
               </Button>
             </div>
-            <div className="bg-blue-200 rounded-lg h-96 flex items-center justify-center">
-              <span className="text-blue-700 text-lg">Architecture Showcase</span>
-            </div>
           </div>
-        </div>
-      </section>
-
-      {/* Featured Projects */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Featured Projects</h2>
-          <div className="grid md:grid-cols-2 gap-8">
-            {[
-              { name: "Eco-Residential Complex", type: "Residential", year: "2024" },
-              { name: "Modern Office Tower", type: "Commercial", year: "2023" },
-              { name: "Cultural Arts Center", type: "Public", year: "2023" },
-              { name: "Sustainable Housing", type: "Residential", year: "2022" },
-            ].map((project, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="bg-blue-200 h-48 rounded-lg mb-4 flex items-center justify-center">
-                    <span className="text-blue-700">Project Image</span>
-                  </div>
-                  <CardTitle className="text-blue-700">{project.name}</CardTitle>
-                  <CardDescription>
-                    {project.type} • {project.year}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// Chef Template
-function ChefTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-green-50 to-emerald-50 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-green-700">Chef Marco</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-green-700">
-                Menu
-              </a>
-              <a href="#" className="text-gray-700 hover:text-green-700">
-                Catering
-              </a>
-              <a href="#" className="text-gray-700 hover:text-green-700">
-                Classes
-              </a>
-              <a href="#" className="text-gray-700 hover:text-green-700">
-                About
-              </a>
-            </div>
-            <Button className="bg-green-700 hover:bg-green-800">Book Table</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Culinary Excellence Redefined</h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Experience the art of fine dining with locally sourced ingredients and innovative techniques that celebrate
-            the essence of flavor.
-          </p>
-          <Badge className="bg-green-100 text-green-800 text-lg px-4 py-2 mb-8">Michelin Star Chef</Badge>
-        </div>
-      </section>
-
-      {/* Signature Dishes */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Signature Dishes</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                dish: "Truffle Risotto",
-                description: "Creamy arborio rice with black truffle and parmesan",
-                price: "$45",
-              },
-              {
-                dish: "Seared Duck Breast",
-                description: "Pan-seared duck with cherry gastrique and roasted vegetables",
-                price: "$52",
-              },
-              {
-                dish: "Chocolate Soufflé",
-                description: "Warm chocolate soufflé with vanilla bean ice cream",
-                price: "$18",
-              },
-            ].map((item, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="bg-green-200 h-48 rounded-lg mb-4 flex items-center justify-center">
-                    <span className="text-green-700">Dish Photo</span>
-                  </div>
-                  <CardTitle className="text-green-700">{item.dish}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 mb-2">{item.description}</p>
-                  <p className="text-2xl font-bold text-green-700">{item.price}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// Therapist Template
-function TherapistTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-teal-50 to-cyan-50 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-teal-700">Dr. Lisa Park</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-teal-700">
-                Services
-              </a>
-              <a href="#" className="text-gray-700 hover:text-teal-700">
-                About
-              </a>
-              <a href="#" className="text-gray-700 hover:text-teal-700">
-                Resources
-              </a>
-              <a href="#" className="text-gray-700 hover:text-teal-700">
-                Contact
-              </a>
-            </div>
-            <Button className="bg-teal-700 hover:bg-teal-800">Schedule</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Your Mental Health Matters</h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Compassionate therapy services to help you navigate life's challenges and build resilience for a healthier,
-            happier future.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-teal-700 hover:bg-teal-800">
-              Book Consultation
-            </Button>
-            <Button size="lg" variant="outline">
-              Learn More
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Services */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Therapy Services</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { service: "Individual Therapy", description: "One-on-one sessions for personal growth and healing" },
-              {
-                service: "Couples Therapy",
-                description: "Relationship counseling to strengthen bonds and communication",
-              },
-              { service: "Family Therapy", description: "Family dynamics and conflict resolution support" },
-              { service: "Group Therapy", description: "Supportive group sessions for shared experiences" },
-              { service: "Anxiety Treatment", description: "Specialized approaches for anxiety and panic disorders" },
-              {
-                service: "Depression Support",
-                description: "Evidence-based treatment for depression and mood disorders",
-              },
-            ].map((item, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="text-teal-700">{item.service}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">{item.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// Business Consultant Template
-function ConsultantTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-indigo-700">Strategic Solutions</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-indigo-700">
-                Services
-              </a>
-              <a href="#" className="text-gray-700 hover:text-indigo-700">
-                Case Studies
-              </a>
-              <a href="#" className="text-gray-700 hover:text-indigo-700">
-                About
-              </a>
-              <a href="#" className="text-gray-700 hover:text-indigo-700">
-                Contact
-              </a>
-            </div>
-            <Button className="bg-indigo-700 hover:bg-indigo-800">Free Audit</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Accelerate Your Business Growth</h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Strategic consulting services that transform challenges into opportunities and drive sustainable business
-            success.
-          </p>
-          <Badge className="bg-indigo-100 text-indigo-800 text-lg px-4 py-2 mb-8">20+ Years Experience</Badge>
-        </div>
-      </section>
-
-      {/* Services */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Consulting Services</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { service: "Strategy Development", icon: "📊" },
-              { service: "Operations Optimization", icon: "⚙️" },
-              { service: "Digital Transformation", icon: "💻" },
-              { service: "Change Management", icon: "🔄" },
-            ].map((item, index) => (
-              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="text-4xl mb-4">{item.icon}</div>
-                  <CardTitle className="text-indigo-700">{item.service}</CardTitle>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Results */}
-      <section className="py-16 px-6 bg-indigo-50">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Proven Results</h2>
-          <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-indigo-700 mb-2">150+</div>
-              <p className="text-gray-600">Companies Transformed</p>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-indigo-700 mb-2">$50M+</div>
-              <p className="text-gray-600">Revenue Generated</p>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-indigo-700 mb-2">95%</div>
-              <p className="text-gray-600">Client Satisfaction</p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// Interior Designer Template
-function DesignerTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-rose-50 to-pink-50 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-rose-700">Bella Interiors</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-rose-700">
-                Portfolio
-              </a>
-              <a href="#" className="text-gray-700 hover:text-rose-700">
-                Services
-              </a>
-              <a href="#" className="text-gray-700 hover:text-rose-700">
-                Process
-              </a>
-              <a href="#" className="text-gray-700 hover:text-rose-700">
-                Contact
-              </a>
-            </div>
-            <Button className="bg-rose-700 hover:bg-rose-800">Consultation</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Transform Your Space</h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Creating beautiful, functional interiors that reflect your personality and enhance your daily living
-            experience.
-          </p>
-        </div>
-      </section>
-
-      {/* Portfolio */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Recent Projects</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { project: "Modern Living Room", style: "Contemporary" },
-              { project: "Luxury Bedroom", style: "Minimalist" },
-              { project: "Kitchen Renovation", style: "Scandinavian" },
-              { project: "Home Office", style: "Industrial" },
-              { project: "Dining Room", style: "Traditional" },
-              { project: "Bathroom Design", style: "Spa-like" },
-            ].map((item, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="bg-rose-200 h-48 rounded-lg mb-4 flex items-center justify-center">
-                    <span className="text-rose-700">Interior Photo</span>
-                  </div>
-                  <CardTitle className="text-rose-700">{item.project}</CardTitle>
-                  <CardDescription>{item.style}</CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
-}
-
-// Musician Template
-function MusicianTemplate() {
-  return (
-    <div className="bg-gradient-to-br from-violet-50 to-purple-50 min-h-full">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <nav className="flex items-center justify-between">
-            <div className="text-2xl font-bold text-violet-700">Jordan Rivers</div>
-            <div className="hidden md:flex space-x-8">
-              <a href="#" className="text-gray-700 hover:text-violet-700">
-                Music
-              </a>
-              <a href="#" className="text-gray-700 hover:text-violet-700">
-                Tours
-              </a>
-              <a href="#" className="text-gray-700 hover:text-violet-700">
-                About
-              </a>
-              <a href="#" className="text-gray-700 hover:text-violet-700">
-                Contact
-              </a>
-            </div>
-            <Button className="bg-violet-700 hover:bg-violet-800">Listen Now</Button>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">Music That Moves Souls</h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            Original compositions blending classical training with contemporary sounds, creating emotional journeys
-            through melody and rhythm.
-          </p>
-          <Badge className="bg-violet-100 text-violet-800 text-lg px-4 py-2 mb-8">Grammy Nominated Artist</Badge>
-        </div>
-      </section>
-
-      {/* Latest Releases */}
-      <section className="py-16 px-6 bg-white">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Latest Releases</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { album: "Midnight Reflections", year: "2024", genre: "Alternative Rock" },
-              { album: "Urban Symphony", year: "2023", genre: "Electronic Pop" },
-              { album: "Acoustic Sessions", year: "2023", genre: "Folk" },
-            ].map((release, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <div className="bg-violet-200 h-48 rounded-lg mb-4 flex items-center justify-center">
-                    <span className="text-violet-700">Album Cover</span>
-                  </div>
-                  <CardTitle className="text-violet-700">{release.album}</CardTitle>
-                  <CardDescription>
-                    {release.year} • {release.genre}
-                  </CardDescription>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Upcoming Shows */}
-      <section className="py-16 px-6 bg-violet-50">
-        <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Upcoming Shows</h2>
-          <div className="space-y-4 max-w-2xl mx-auto">
-            {[
-              { date: "Mar 15", venue: "Blue Note Jazz Club", city: "New York, NY" },
-              { date: "Mar 22", venue: "The Fillmore", city: "San Francisco, CA" },
-              { date: "Apr 5", venue: "House of Blues", city: "Chicago, IL" },
-            ].map((show, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="flex items-center justify-between p-6">
-                  <div>
-                    <div className="font-bold text-violet-700">{show.date}</div>
-                    <div className="text-gray-900">{show.venue}</div>
-                    <div className="text-gray-600">{show.city}</div>
-                  </div>
-                  <Button variant="outline" className="border-violet-700 text-violet-700 bg-transparent">
-                    Tickets
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+        )}
+      </div>
     </div>
   )
 }
