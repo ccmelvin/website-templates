@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { showitTemplates, categories, styles, type ShowitTemplate } from "@/lib/showit-templates"
+import { websiteTemplates, categories, styles, type WebsiteTemplate } from "@/lib/website-templates"
 import { 
   Search, 
   Eye, 
@@ -35,7 +35,7 @@ import {
 const difficulties = ["All", "Beginner", "Intermediate", "Advanced"]
 const priceRanges = ["All", "Free", "$1-99", "$100-149", "$150+"]
 
-export default function ShowitTemplateDashboard() {
+export default function TemplateDashboard() {
   const { theme, setTheme } = useTheme()
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
@@ -52,7 +52,7 @@ export default function ShowitTemplateDashboard() {
   }, [])
 
   const filteredTemplates = useMemo(() => {
-    let filtered = showitTemplates.filter(template => {
+    let filtered = websiteTemplates.filter(template => {
       const matchesSearch = template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           template.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           template.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -126,7 +126,7 @@ export default function ShowitTemplateDashboard() {
             </div>
             <div>
               <span className="text-2xl font-bold bg-gradient-to-r from-pink-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                ShowCraft
+                TemplateCraft
               </span>
               <p className="text-xs text-slate-500 dark:text-slate-400 -mt-1">Design Templates</p>
             </div>
@@ -168,7 +168,7 @@ export default function ShowitTemplateDashboard() {
           <div className="relative px-8 py-16 text-center">
             <div className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4 mr-2 text-pink-300" />
-              {showitTemplates.length}+ Premium Design Templates
+              {websiteTemplates.length}+ Premium Design Templates
             </div>
             <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 tracking-tight">
               Beautiful Website
@@ -307,7 +307,7 @@ export default function ShowitTemplateDashboard() {
           <div className="flex items-center gap-4">
             <p className="text-slate-600 font-medium">
               Showing <span className="font-bold text-slate-900">{filteredTemplates.length}</span> of{' '}
-              <span className="font-bold text-slate-900">{showitTemplates.length}</span> templates
+              <span className="font-bold text-slate-900">{websiteTemplates.length}</span> templates
             </p>
             {(searchTerm || selectedCategory !== "All" || selectedStyle !== "All" || selectedDifficulty !== "All" || selectedPriceRange !== "All") && (
               <Button

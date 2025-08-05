@@ -1,10 +1,10 @@
-// Showit-style template data structure
-export interface ShowitTemplate {
+// Website template data structure
+export interface WebsiteTemplate {
   id: string
   name: string
   description: string
-  category: ShowitCategory
-  style: ShowitStyle
+  category: WebsiteCategory
+  style: WebsiteStyle
   color: string
   features: string[]
   pages: string[]
@@ -29,7 +29,7 @@ export interface ShowitTemplate {
   isPremium: boolean
 }
 
-export type ShowitCategory = 
+export type WebsiteCategory = 
   | 'Wedding & Events'
   | 'Photography'
   | 'Creative & Design'
@@ -42,7 +42,7 @@ export type ShowitCategory =
   | 'Real Estate'
   | 'Interior Design'
 
-export type ShowitStyle = 
+export type WebsiteStyle = 
   | 'Modern & Minimal'
   | 'Elegant & Luxurious'
   | 'Bold & Creative'
@@ -52,7 +52,7 @@ export type ShowitStyle =
   | 'Vintage & Classic'
   | 'Playful & Fun'
 
-export const showitTemplates: ShowitTemplate[] = [
+export const websiteTemplates: WebsiteTemplate[] = [
   {
     id: "life-coach",
     name: "Life Coach Premium",
@@ -374,7 +374,7 @@ export const showitTemplates: ShowitTemplate[] = [
   }
 ]
 
-export const categories: ShowitCategory[] = [
+export const categories: WebsiteCategory[] = [
   'Wedding & Events',
   'Photography',
   'Creative & Design',
@@ -388,7 +388,7 @@ export const categories: ShowitCategory[] = [
   'Interior Design'
 ]
 
-export const styles: ShowitStyle[] = [
+export const styles: WebsiteStyle[] = [
   'Modern & Minimal',
   'Elegant & Luxurious',
   'Bold & Creative',
