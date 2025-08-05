@@ -38,13 +38,14 @@ const templateComponents: Record<string, React.ComponentType> = {
 }
 
 interface TemplatePageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
-export default function TemplatePage({ params }: TemplatePageProps) {
-  const TemplateComponent = templateComponents[params.id]
+export default async function TemplatePage({ params }: TemplatePageProps) {
+  const { id } = await params
+  const TemplateComponent = templateComponents[id]
   
   if (!TemplateComponent) {
     notFound()

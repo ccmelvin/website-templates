@@ -336,43 +336,41 @@ export default function TemplateDashboard() {
         </div>
 
         <div className={viewMode === "grid" 
-          ? "grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8" 
-          : "space-y-6"
+          ? "grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" 
+          : "space-y-4"
         }>
           {filteredTemplates.map((template) => (
             <Card 
               key={template.id} 
-              className={`group hover:shadow-2xl hover:shadow-slate-200/50 transition-all duration-500 cursor-pointer border-0 bg-white/80 backdrop-blur-sm hover:-translate-y-1 ${
+              className={`group hover:shadow-xl transition-all duration-300 cursor-pointer border border-slate-200 bg-white hover:-translate-y-1 ${
                 viewMode === "list" ? "flex overflow-hidden" : "overflow-hidden"
               }`}
             >
               <div className={`relative overflow-hidden ${
-                viewMode === "list" ? "w-64 flex-shrink-0" : "aspect-[4/3]"
+                viewMode === "list" ? "w-48 flex-shrink-0" : "aspect-[4/3]"
               }`}>
-                <div className={`absolute inset-0 bg-gradient-to-br ${getColorClasses(template.color)} opacity-10`} />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+                <div className={`absolute inset-0 bg-gradient-to-br ${getColorClasses(template.color)} opacity-5`} />
                 
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center text-slate-700">
-                    <div className="w-16 h-16 mx-auto mb-3 bg-white/90 rounded-2xl flex items-center justify-center shadow-lg">
-                      <Monitor className="h-8 w-8 text-slate-600" />
+                  <div className="text-center">
+                    <div className="w-12 h-12 mx-auto mb-2 bg-white rounded-xl flex items-center justify-center shadow-sm border border-slate-100">
+                      <Monitor className="h-6 w-6 text-slate-500" />
                     </div>
-                    <p className="text-sm font-semibold text-slate-800">{template.name}</p>
-                    <p className="text-xs text-slate-600 mt-1">{template.category}</p>
+                    <p className="text-xs font-medium text-slate-600">{template.category}</p>
                   </div>
                 </div>
                 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3">
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center">
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button size="sm" className="bg-white/90 text-slate-900 hover:bg-white shadow-lg backdrop-blur-sm">
+                      <Button size="sm" className="bg-white text-slate-900 hover:bg-slate-50">
                         <Eye className="h-4 w-4 mr-2" />
                         Preview
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-6xl h-[80vh]">
                       <DialogHeader>
-                        <DialogTitle className="text-xl font-semibold">{template.name} - Live Preview</DialogTitle>
+                        <DialogTitle className="text-xl font-semibold">{template.name}</DialogTitle>
                         <DialogDescription className="text-slate-600">
                           {template.description}
                         </DialogDescription>
@@ -386,136 +384,86 @@ export default function TemplateDashboard() {
                       </div>
                     </DialogContent>
                   </Dialog>
-                  
-                  <Button size="sm" className="bg-white/90 text-slate-900 hover:bg-white shadow-lg backdrop-blur-sm" asChild>
-                    <a href={template.demoUrl} target="_blank">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open
-                    </a>
-                  </Button>
                 </div>
 
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 hover:bg-white shadow-lg backdrop-blur-sm w-10 h-10 p-0"
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-300 bg-white/90 hover:bg-white w-8 h-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation()
                     toggleFavorite(template.id)
                   }}
                 >
                   <Heart 
-                    className={`h-4 w-4 transition-colors ${
+                    className={`h-4 w-4 ${
                       favorites.includes(template.id) 
                         ? "fill-red-500 text-red-500" 
-                        : "text-slate-600 hover:text-red-500"
+                        : "text-slate-400 hover:text-red-500"
                     }`} 
                   />
                 </Button>
 
-                <div className="absolute top-3 left-3 flex flex-col gap-2">
-                  <Badge className="bg-white/90 text-slate-700 border-0 shadow-sm backdrop-blur-sm font-medium">
-                    {template.category}
+                {template.isPremium && (
+                  <Badge className="absolute top-2 left-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs px-2 py-1">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Pro
                   </Badge>
-                  {template.mobileOptimized && (
-                    <Badge variant="outline" className="bg-white/90 border-0 text-slate-600 shadow-sm backdrop-blur-sm">
-                      <Smartphone className="h-3 w-3 mr-1" />
-                      Mobile Ready
-                    </Badge>
-                  )}
-                  {template.isPremium && (
-                    <Badge variant="outline" className="bg-gradient-to-r from-pink-500 to-purple-600 text-white border-0 shadow-sm backdrop-blur-sm">
-                      <Crown className="h-3 w-3 mr-1" />
-                      Premium
-                    </Badge>
-                  )}
-                </div>
+                )}
               </div>
 
-              <div className={`p-6 ${viewMode === "list" ? "flex-1" : ""}`}>
+              <div className={`p-4 ${viewMode === "list" ? "flex-1" : ""}`}>
                 <div className="flex items-start justify-between mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="font-bold text-lg text-slate-900 group-hover:text-pink-600 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-slate-900 truncate">
                         {template.name}
                       </h3>
                       {template.isNew && (
-                        <Badge className="bg-green-100 text-green-700 text-xs">
-                          <Sparkles className="w-3 h-3 mr-1" />
+                        <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
                           New
                         </Badge>
                       )}
-                      {template.isBestseller && (
-                        <Badge className="bg-amber-100 text-amber-700 text-xs">
-                          <Crown className="w-3 h-3 mr-1" />
-                          Bestseller
-                        </Badge>
-                      )}
                     </div>
-                    <p className="text-sm text-slate-600 leading-relaxed mb-2">{template.description}</p>
-                    <p className="text-xs text-slate-500">by {template.designer}</p>
+                    <p className="text-sm text-slate-600 line-clamp-2 mb-2">{template.description}</p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-slate-900">
+                  <div className="text-right ml-3">
+                    <div className="text-lg font-bold text-slate-900">
                       ${template.price}
                     </div>
-                    <p className="text-xs text-slate-500">{template.style}</p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {template.features.slice(0, 3).map((feature, index) => (
-                    <Badge key={index} variant="outline" className="text-xs bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 transition-colors">
-                      {feature}
-                    </Badge>
-                  ))}
-                  {template.features.length > 3 && (
-                    <Badge variant="outline" className="text-xs bg-pink-50 text-pink-700 border-pink-200">
-                      +{template.features.length - 3} more
-                    </Badge>
-                  )}
-                </div>
-
-                <div className="flex items-center justify-between text-sm mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5">
+                <div className="flex items-center justify-between text-sm mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
                       <div className="flex">
                         {[...Array(5)].map((_, i) => (
                           <Star 
                             key={i} 
-                            className={`h-3.5 w-3.5 ${
+                            className={`h-3 w-3 ${
                               i < Math.floor(template.rating) 
                                 ? "fill-yellow-400 text-yellow-400" 
-                                : "text-slate-300"
+                                : "text-slate-200"
                             }`} 
                           />
                         ))}
                       </div>
-                      <span className="font-medium text-slate-700">{template.rating}</span>
+                      <span className="text-xs text-slate-600 ml-1">{template.rating}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-slate-600">
-                      <Users className="h-3.5 w-3.5" />
-                      <span className="font-medium">{template.downloads.toLocaleString()}</span>
+                    <div className="flex items-center gap-1 text-slate-500">
+                      <Users className="h-3 w-3" />
+                      <span className="text-xs">{template.downloads > 1000 ? `${Math.round(template.downloads/1000)}k` : template.downloads}</span>
                     </div>
                   </div>
-                  <Badge 
-                    variant={template.difficulty === "Beginner" ? "default" : 
-                            template.difficulty === "Intermediate" ? "secondary" : "destructive"}
-                    className="text-xs font-medium"
-                  >
+                  <Badge variant="outline" className="text-xs">
                     {template.difficulty}
                   </Badge>
                 </div>
 
-                <div className="flex gap-3">
-                  <Button className="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-medium shadow-lg">
-                    <ShoppingCart className="h-4 w-4 mr-2" />
-                    Add to Cart
-                  </Button>
-                  <Button variant="outline" className="border-slate-200 hover:bg-slate-50">
-                    <Share2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button className="w-full bg-slate-900 hover:bg-slate-800 text-white" size="sm">
+                  Use Template
+                </Button>
               </div>
             </Card>
           ))}
